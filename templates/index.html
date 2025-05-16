@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odd Ball Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            color: #444;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .weights-container {
+            margin-top: 20px;
+        }
+        .output {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        function generateWeightInputs() {
+            const n = parseInt(document.getElementById('size').value);
+            const weightsContainer = document.getElementById('weights-container');
+            weightsContainer.innerHTML = '';
+
+            if (isNaN(n) || n < 3) {
+                alert('Please enter a valid number greater than or equal to 3.');
+                return;
+            }
+
+            for (let i = 0; i < n; i++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.placeholder = `Weight of ball ${i + 1}`;
+                input.className = 'weight-input';
+                weightsContainer.appendChild(input);
+            }
+
+            const detectButton = document.getElementById('detect-button');
+            detectButton.style.display = 'block'; 
+        }
+
+        async function detectOddBall() {
+            const weightInputs = document.querySelectorAll('.weight-input');
+            const balls = Array.from(weightInputs).map(input => parseFloat(input.value));
+
+            if (balls.some(isNaN)) {
+                alert('Please enter valid weights for all balls.');
+                return;
+            }
+
+            const response = await fetch('/detect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ balls }),
+            });
+
+            const result = await response.json();
+            const output = document.getElementById('output');
+
+            if (response.ok) {
+                const divideAndConquer = result.divide_and_conquer;
+                const bruteForce = result.brute_force;
+
+                output.innerHTML = `
+                    <h3>Divide and Conquer:</h3>
+                    <p>Damaged Ball Position: ${divideAndConquer.position}, Condition: ${divideAndConquer.condition}</p>
+                    <p>Time Complexity: ${divideAndConquer.timeComplexity}</p>
+                    <p>Execution Time: ${divideAndConquer.executionTime}</p>
+                    <h3>Brute Force:</h3>
+                    <p>Damaged Ball Position: ${bruteForce.position}, Condition: ${bruteForce.condition}</p>
+                    <p>Time Complexity: ${bruteForce.timeComplexity}</p>
+                    <p>Execution Time: ${bruteForce.executionTime}</p>
+                `;
+            } else {
+                output.textContent = result.error;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Odd Ball Detection</h1>
+        <p>Enter the number of balls:</p>
+        <input type="number" id="size" placeholder="Enter number of balls (e.g., 3)" min="3">
+        <button onclick="generateWeightInputs()">Generate Inputs</button>
+
+        <div id="weights-container" class="weights-container"></div>
+
+        <button id="detect-button" onclick="detectOddBall()" style="display: none;">Detect Odd Ball</button>
+
+        <div id="output" class="output"></div>
+    </div>
+</body>
+</html>
